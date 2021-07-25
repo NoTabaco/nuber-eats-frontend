@@ -7,8 +7,8 @@ import {
 } from "../__generated__/loginMutation";
 
 const LOGIN_MUTATION = gql`
-  mutation loginMutation($email: String!, $password: String!) {
-    login(input: { email: $email, password: $password }) {
+  mutation loginMutation($loginInput: LoginInput!) {
+    login(input: $loginInput) {
       ok
       error
       token
@@ -28,13 +28,25 @@ export const Login = () => {
     getValues,
     formState: { errors },
   } = useForm<ILoginForm>();
-  const [loginMutation, { loading, error, data }] = useMutation<
+  const onCompleted = (data: loginMutation) => {
+    const {
+      login: { ok, token },
+    } = data;
+    if (ok) {
+      console.log(token);
+    }
+  };
+  const [loginMutation, { loading, data: loginMutationResult }] = useMutation<
     loginMutation,
     loginMutationVariables
-  >(LOGIN_MUTATION);
+  >(LOGIN_MUTATION, {
+    onCompleted,
+  });
   const onSubmit = () => {
-    const { email, password } = getValues();
-    loginMutation({ variables: { email, password } });
+    if (!loading) {
+      const { email, password } = getValues();
+      loginMutation({ variables: { loginInput: { email, password } } });
+    }
   };
 
   return (
@@ -53,7 +65,7 @@ export const Login = () => {
             className="input"
           />
           {errors.email?.message && (
-            <FormError errorMessage={errors.email?.message} />
+            <FormError errorMessage={errors.email.message} />
           )}
           <input
             {...register("password", {
@@ -65,13 +77,18 @@ export const Login = () => {
             className="input"
           />
           {errors.password?.message && (
-            <FormError errorMessage={errors.password?.message} />
+            <FormError errorMessage={errors.password.message} />
           )}
 
           {errors.password?.type === "minLength" && (
             <FormError errorMessage={"Password must be more than 10 chars"} />
           )}
-          <button className="btn mt-3">Log In</button>
+          <button className="btn mt-3">
+            {loading ? "Loading..." : "Log In"}
+          </button>
+          {loginMutationResult?.login.error && (
+            <FormError errorMessage={loginMutationResult.login.error} />
+          )}
         </form>
       </div>
     </div>
