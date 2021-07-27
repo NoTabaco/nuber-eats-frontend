@@ -1,6 +1,8 @@
 import { gql, useMutation } from "@apollo/client";
+import { Helmet } from "react-helmet";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import { isLoggedInVar } from "../apollo";
 import { Button } from "../components/button";
 import { FormError } from "../components/form-error";
 import nuberLogo from "../images/logo.svg";
@@ -39,6 +41,7 @@ export const Login = () => {
     } = data;
     if (ok) {
       console.log(token);
+      isLoggedInVar(true);
     }
   };
   const [loginMutation, { loading, data: loginMutationResult }] = useMutation<
@@ -56,6 +59,9 @@ export const Login = () => {
 
   return (
     <div className="flex items-center flex-col mt-10 md:mt-24">
+      <Helmet>
+        <title>Login | Nuber Eats</title>
+      </Helmet>
       <div className="w-full max-w-screen-sm flex flex-col items-center px-5">
         <img src={nuberLogo} className="w-52 mb-10" alt="nuberLogo" />
         <h4 className="w-full font-normal text-3xl mb-5">Welcome back</h4>
@@ -64,7 +70,14 @@ export const Login = () => {
           className="grid gap-3 mt-5 mb-4 w-full"
         >
           <input
-            {...register("email", { required: "Email is required" })}
+            {...register("email", {
+              required: "Email is required",
+              pattern: {
+                value:
+                  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+                message: "Please enter a valid email",
+              },
+            })}
             type="email"
             placeholder="Email"
             required
