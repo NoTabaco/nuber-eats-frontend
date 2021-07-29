@@ -1,17 +1,17 @@
-import {
-  BrowserRouter as Router,
-  Redirect,
-  Route,
-  Switch,
-} from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { Header } from "../components/header";
 import { useMe } from "../hooks/useMe";
+import { NotFound } from "../pages/404";
 import { Restaurants } from "../pages/client/restaurants";
+import { ConfirmEmail } from "../pages/user/confirm-email";
 import { UserRole } from "../__generated__/globalTypes";
 
 const ClientRoutes = () => [
-  <Route path="/" exact key={Math.random()}>
+  <Route path="/" exact key={1}>
     <Restaurants />
+  </Route>,
+  <Route path="/confirm" exact key={2}>
+    <ConfirmEmail />
   </Route>,
 ];
 
@@ -30,7 +30,9 @@ export const LoggedInRouter = () => {
       <Header />
       <Switch>
         {data.me.role === UserRole.Client && ClientRoutes()}
-        <Redirect to="/" />
+        <Route>
+          <NotFound />
+        </Route>
       </Switch>
     </Router>
   );
