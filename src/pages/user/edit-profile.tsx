@@ -1,4 +1,4 @@
-import { gql, useMutation } from "@apollo/client";
+import { gql, useApolloClient, useMutation } from "@apollo/client";
 import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
 import { Button } from "../../components/button";
@@ -27,11 +27,44 @@ interface IFormProps {
 
 export const EditProfile = () => {
   const { data: userData } = useMe();
+  const client = useApolloClient();
   const onCompleted = (data: editProfileMutation) => {
     const {
       editProfile: { ok },
     } = data;
-    if (ok) {
+    if (ok && userData) {
+      const {
+        me: { email: prevEmail, id, role: prevRole },
+      } = userData;
+      const { email: newEmail, role: newRole } = getValues();
+      if (prevEmail !== newEmail) {
+        client.writeFragment({
+          id: `User:${id}`,
+          fragment: gql`
+            fragment EmailEditedUser on User {
+              email
+              verified
+            }
+          `,
+          data: {
+            email: newEmail,
+            verified: false,
+          },
+        });
+      }
+      if (prevRole !== newRole) {
+        client.writeFragment({
+          id: `User:${id}`,
+          fragment: gql`
+            fragment RoleEditedUser on User {
+              role
+            }
+          `,
+          data: {
+            role: newRole,
+          },
+        });
+      }
     }
   };
   const [editProfileMutation, { loading, data: editProfileMutationResult }] =

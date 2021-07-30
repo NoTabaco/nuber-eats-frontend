@@ -16,7 +16,9 @@ export const Header: React.FC = () => {
       )}
       <header className="py-5">
         <div className="w-full px-5 xl:px-0 max-w-screen-xl mx-auto flex justify-between items-center">
-          <img src={nuberLogo} className="w-36" alt="Nuber Logo" />
+          <Link to="/">
+            <img src={nuberLogo} className="w-36" alt="Nuber Logo" />
+          </Link>
           <span className="text-sm">
             <Link to="/edit-profile">
               <FontAwesomeIcon icon={faUser} className="text-xl" />
