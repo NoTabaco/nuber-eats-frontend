@@ -61,7 +61,7 @@ export const ConfirmEmail = () => {
   return (
     <div className="mt-60 flex flex-col justify-center items-center">
       <Helmet>
-        <title>ConfirmEmail | Nuber Eats</title>
+        <title>Verify Email | Nuber Eats</title>
       </Helmet>
       <h2 className="text-lg mb-1 font-medium">Confirming email...</h2>
       <h4 className="text-gray-700 text-sm">

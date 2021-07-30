@@ -69,7 +69,7 @@ export const CreateAccount = () => {
   return (
     <div className="flex items-center flex-col mt-10 md:mt-24">
       <Helmet>
-        <title>CreateAccount | Nuber Eats</title>
+        <title>Create Account | Nuber Eats</title>
       </Helmet>
       <div className="w-full max-w-screen-sm flex flex-col items-center px-5">
         <img src={nuberLogo} className="w-52 mb-10" alt="Nuber Logo" />
