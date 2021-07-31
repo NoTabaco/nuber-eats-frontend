@@ -1,7 +1,11 @@
 import { gql, useQuery } from "@apollo/client";
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
+import { useForm } from "react-hook-form";
+import { useHistory } from "react-router-dom";
 import { Category } from "../../components/category";
 import { Restaurant } from "../../components/restaurant";
+import { RESTAURANT_FRAGMENT } from "../../fragments";
 import {
   restaurantsPageQuery,
   restaurantsPageQueryVariables,
@@ -26,18 +30,16 @@ const RESTAURANTS_QUERY = gql`
       totalPages
       totalResults
       results {
-        id
-        name
-        coverImage
-        category {
-          name
-        }
-        address
-        isPromoted
+        ...RestaurantParts
       }
     }
   }
+  ${RESTAURANT_FRAGMENT}
 `;
+
+interface IRestaurantsForm {
+  searchTerm: string;
+}
 
 export const Restaurants = () => {
   const [page, setPage] = useState(1);
@@ -49,12 +51,28 @@ export const Restaurants = () => {
   });
   const onPrevPageClick = () => setPage(current => current - 1);
   const onNextPageClick = () => setPage(current => current + 1);
+  const { register, handleSubmit, getValues } = useForm<IRestaurantsForm>();
+  const history = useHistory();
+  const onSearchSubmit = () => {
+    const { searchTerm } = getValues();
+    history.push({
+      pathname: "/search",
+      search: `?term=${searchTerm}`,
+    });
+  };
 
   return (
     <div>
-      <form className="bg-gray-800 w-full py-32 flex justify-center items-center">
+      <Helmet>
+        <title>Home | Nuber Eats</title>
+      </Helmet>
+      <form
+        className="bg-gray-800 w-full py-32 flex justify-center items-center"
+        onSubmit={handleSubmit(onSearchSubmit)}
+      >
         <input
-          className="input rounded-md border-0 w-3/12"
+          {...register("searchTerm", { required: true, min: 3 })}
+          className="input rounded-md border-0 md:w-3/12 w-2/3"
           type="Search"
           placeholder="Search restaurants..."
         />
@@ -70,7 +88,7 @@ export const Restaurants = () => {
               />
             ))}
           </div>
-          <div className="grid grid-cols-3 gap-x-5 gap-y-7 mt-14">
+          <div className="grid md:grid-cols-3 gap-x-5 gap-y-7 mt-14 mx-5 md:mx-0">
             {data?.restaurants.results?.map(restaurant => (
               <Restaurant
                 key={restaurant.id}
