@@ -26,7 +26,7 @@ const SEARCH_RESTAURANT_QUERY = gql`
 export const Search = () => {
   const location = useLocation();
   const history = useHistory();
-  const [queryReadyToStart, { loading, data, error, called }] = useLazyQuery<
+  const [queryReadyToStart, { loading, data, error }] = useLazyQuery<
     searchRestaurantQuery,
     searchRestaurantQueryVariables
   >(SEARCH_RESTAURANT_QUERY);
@@ -38,8 +38,8 @@ export const Search = () => {
     queryReadyToStart({
       variables: { searchRestaurantInput: { page: 1, query } },
     });
-  }, [history, location]);
-  console.log(data);
+  }, [history, location, queryReadyToStart]);
+
   return (
     <div>
       <Helmet>

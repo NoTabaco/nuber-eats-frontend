@@ -2,10 +2,10 @@ import { gql, useQuery } from "@apollo/client";
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
-import { useHistory } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import { Category } from "../../components/category";
 import { Restaurant } from "../../components/restaurant";
-import { RESTAURANT_FRAGMENT } from "../../fragments";
+import { CATEGORY_FRAGMENT, RESTAURANT_FRAGMENT } from "../../fragments";
 import {
   restaurantsPageQuery,
   restaurantsPageQueryVariables,
@@ -17,11 +17,7 @@ const RESTAURANTS_QUERY = gql`
       ok
       error
       categories {
-        id
-        name
-        coverImage
-        slug
-        restaurantCount
+        ...CategoryParts
       }
     }
     restaurants(input: $restaurantsInput) {
@@ -35,6 +31,7 @@ const RESTAURANTS_QUERY = gql`
     }
   }
   ${RESTAURANT_FRAGMENT}
+  ${CATEGORY_FRAGMENT}
 `;
 
 interface IRestaurantsForm {
@@ -81,11 +78,12 @@ export const Restaurants = () => {
         <div className="max-w-screen-xl mx-auto mt-5 pb-14">
           <div className="flex justify-around max-w-sm mx-auto">
             {data?.allCategories.categories?.map(category => (
-              <Category
-                key={category.id}
-                coverImage={category.coverImage}
-                name={category.name}
-              />
+              <Link key={category.id} to={`/category/${category.slug}`}>
+                <Category
+                  coverImage={category.coverImage}
+                  name={category.name}
+                />
+              </Link>
             ))}
           </div>
           <div className="grid md:grid-cols-3 gap-x-5 gap-y-7 mt-14 mx-5 md:mx-0">
