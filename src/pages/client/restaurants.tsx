@@ -1,4 +1,7 @@
 import { gql, useQuery } from "@apollo/client";
+import { useState } from "react";
+import { Category } from "../../components/category";
+import { Restaurant } from "../../components/restaurant";
 import {
   restaurantsPageQuery,
   restaurantsPageQueryVariables,
@@ -37,12 +40,15 @@ const RESTAURANTS_QUERY = gql`
 `;
 
 export const Restaurants = () => {
+  const [page, setPage] = useState(1);
   const { data, loading } = useQuery<
     restaurantsPageQuery,
     restaurantsPageQueryVariables
   >(RESTAURANTS_QUERY, {
-    variables: { restaurantsInput: { page: 1 } },
+    variables: { restaurantsInput: { page } },
   });
+  const onPrevPageClick = () => setPage(current => current - 1);
+  const onNextPageClick = () => setPage(current => current + 1);
 
   return (
     <div>
@@ -54,36 +60,51 @@ export const Restaurants = () => {
         />
       </form>
       {!loading && (
-        <div className="max-w-screen-xl mx-auto mt-5">
+        <div className="max-w-screen-xl mx-auto mt-5 pb-14">
           <div className="flex justify-around max-w-sm mx-auto">
             {data?.allCategories.categories?.map(category => (
-              <div
+              <Category
                 key={category.id}
-                className="flex flex-col group items-center cursor-pointer"
-              >
-                <div
-                  className="w-16 h-16 rounded-full bg-cover group-hover:bg-gray-100"
-                  style={{ backgroundImage: `url(${category.coverImage})` }}
-                ></div>
-                <span className="mt-1 text-sm text-center font-medium">
-                  {category.name}
-                </span>
-              </div>
+                coverImage={category.coverImage}
+                name={category.name}
+              />
             ))}
           </div>
-          <div className="grid grid-cols-3 gap-x-5 gap-y-7 mt-10">
+          <div className="grid grid-cols-3 gap-x-5 gap-y-7 mt-14">
             {data?.restaurants.results?.map(restaurant => (
-              <div key={restaurant.id}>
-                <div
-                  className="bg-cover bg-center py-24 mb-2"
-                  style={{ backgroundImage: `url(${restaurant.coverImage})` }}
-                ></div>
-                <h3 className="text-lg font-medium">{restaurant.name}</h3>
-                <span className="border-t-2 border-gray-200">
-                  {restaurant.category?.name}
-                </span>
-              </div>
+              <Restaurant
+                key={restaurant.id}
+                id={restaurant.id}
+                name={restaurant.name}
+                coverImage={restaurant.coverImage}
+                categoryName={restaurant.category?.name}
+              />
             ))}
+          </div>
+          <div className="grid grid-cols-3 text-center max-w-md items-center mx-auto mt-12">
+            {page > 1 ? (
+              <button
+                className="font-medium text-2xl focus:outline-none"
+                onClick={onPrevPageClick}
+              >
+                &larr;
+              </button>
+            ) : (
+              <div></div>
+            )}
+            <span>
+              Page {page} of {data?.restaurants.totalPages}
+            </span>
+            {page !== data?.restaurants.totalPages ? (
+              <button
+                className="font-medium text-2xl focus:outline-none"
+                onClick={onNextPageClick}
+              >
+                &rarr;
+              </button>
+            ) : (
+              <div></div>
+            )}
           </div>
         </div>
       )}
