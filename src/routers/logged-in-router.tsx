@@ -3,6 +3,7 @@ import { Header } from "../components/header";
 import { useMe } from "../hooks/useMe";
 import { NotFound } from "../pages/404";
 import { Category } from "../pages/client/category";
+import { Restaurant } from "../pages/client/restaurant";
 import { Restaurants } from "../pages/client/restaurants";
 import { Search } from "../pages/client/search";
 import { ConfirmEmail } from "../pages/user/confirm-email";
@@ -24,6 +25,9 @@ const ClientRoutes = () => [
   </Route>,
   <Route path="/category/:slug" key={5}>
     <Category />
+  </Route>,
+  <Route path="/restaurants/:id" key={6}>
+    <Restaurant />
   </Route>,
 ];
 

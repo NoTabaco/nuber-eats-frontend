@@ -2,7 +2,7 @@ import { gql, useQuery } from "@apollo/client";
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
-import { Link, useHistory } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import { Category } from "../../components/category";
 import { Restaurant } from "../../components/restaurant";
 import { CATEGORY_FRAGMENT, RESTAURANT_FRAGMENT } from "../../fragments";
@@ -78,12 +78,13 @@ export const Restaurants = () => {
         <div className="max-w-screen-xl mx-auto mt-5 pb-14">
           <div className="flex justify-around max-w-sm mx-auto">
             {data?.allCategories.categories?.map(category => (
-              <Link key={category.id} to={`/category/${category.slug}`}>
-                <Category
-                  coverImage={category.coverImage}
-                  name={category.name}
-                />
-              </Link>
+              <Category
+                key={category.id}
+                id={category.id}
+                name={category.name}
+                coverImage={category.coverImage}
+                slug={category.slug}
+              />
             ))}
           </div>
           <div className="grid md:grid-cols-3 gap-x-5 gap-y-7 mt-14 mx-5 md:mx-0">
