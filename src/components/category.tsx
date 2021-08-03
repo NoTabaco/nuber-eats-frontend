@@ -1,14 +1,12 @@
 import { Link } from "react-router-dom";
 
 interface ICategoryProps {
-  id: number;
   coverImage?: string | null;
   name: string;
   slug: string;
 }
 
 export const Category: React.FC<ICategoryProps> = ({
-  id,
   coverImage,
   name,
   slug,
