@@ -56,7 +56,8 @@
     ]
   },
   "devDependencies": {
-    "@types/react-router-dom": "^5.1.8"
+    "@types/react-router-dom": "^5.1.8",
+    "mock-apollo-client": "^1.1.0"
   },
   "jest": {
     "collectCoverageFrom": [
