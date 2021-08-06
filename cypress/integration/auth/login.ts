@@ -20,13 +20,6 @@ describe("Log In", () => {
   });
 
   it("can fill out the form and log in", () => {
-    user.visit("/");
-    user.findByPlaceholderText(/email/i).type("hii@gmail.com");
-    user.findByPlaceholderText(/password/i).type("12345");
-    user
-      .findByRole("button")
-      .should("not.have.class", "pointer-events-none")
-      .click();
-    user.window().its("localStorage.nuber-token").should("be.a", "string");
+    user.login("hii@gmail.com", "12345");
   });
 });

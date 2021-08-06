@@ -40,9 +40,6 @@ describe("Create Account", () => {
     user.findByRole("button").click();
     user.wait(1000);
     user.title().should("eq", "Login | Nuber Eats");
-    user.findByPlaceholderText(/email/i).type("hii@gmail.com");
-    user.findByPlaceholderText(/password/i).type("12345");
-    user.findByRole("button").click();
-    user.window().its("localStorage.nuber-token").should("be.a", "string");
+    user.login("hii@gmail.com", "12345");
   });
 });
