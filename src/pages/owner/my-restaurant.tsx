@@ -34,7 +34,6 @@ export const MyRestaurant = () => {
     MY_RESTAURANT_QUERY,
     { variables: { myRestaurantInput: { id: +id } } }
   );
-  console.log(data);
 
   return (
     <div>

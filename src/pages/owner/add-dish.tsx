@@ -1,6 +1,6 @@
 import { gql, useMutation } from "@apollo/client";
 import { Helmet } from "react-helmet-async";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { useHistory, useParams } from "react-router-dom";
 import { Button } from "../../components/button";
 import { FormError } from "../../components/form-error";
@@ -19,11 +19,19 @@ const CREATE_DISH_MUTATION = gql`
   }
 `;
 
-interface IAddDishForm {
+type IAddDishForm = {
   name: string;
   price: string;
   description: string;
-}
+  options: {
+    name: string;
+    choices?: {
+      name: string;
+      extra: string;
+    }[];
+    extra: string;
+  }[];
+};
 
 export const AddDish = () => {
   const { restaurantId } = useParams<{ restaurantId: string }>();
@@ -42,13 +50,22 @@ export const AddDish = () => {
   const {
     register,
     handleSubmit,
+    control,
     getValues,
     formState: { isValid },
   } = useForm<IAddDishForm>({
     mode: "onChange",
   });
+  const { fields, remove, append } = useFieldArray({
+    name: "options",
+    control,
+  });
   const onSubmit = () => {
-    const { name, price, description } = getValues();
+    const { name, price, description, ...options } = getValues();
+    const optionsObj = options.options.map(option => ({
+      name: option.name,
+      extra: +option.extra,
+    }));
     createDishMutation({
       variables: {
         createDishInput: {
@@ -56,10 +73,17 @@ export const AddDish = () => {
           price: +price,
           description,
           restaurantId: +restaurantId,
+          options: optionsObj,
         },
       },
     });
     history.goBack();
+  };
+  const onAddOptionClick = () => {
+    append({ name: "", extra: undefined });
+  };
+  const onDeleteClick = (idToDelete: number) => {
+    remove(idToDelete);
   };
 
   return (
@@ -91,6 +115,38 @@ export const AddDish = () => {
           type="text"
           className="input"
         />
+        <div className="mt-2 mb-4">
+          <h4 className="font-medium text-lg mb-3">Dish Options</h4>
+          <span
+            onClick={onAddOptionClick}
+            className="cursor-pointer text-white bg-gray-900 py-1 px-2"
+          >
+            Add Dish Option
+          </span>
+          {fields.map((field, index) => (
+            <div key={field.id} className="mt-3">
+              <input
+                {...register(`options.${index}.name` as const)}
+                className="py-2 px-4 focus:outline-none focus:border-gray-600 border-2 mr-3"
+                type="text"
+                placeholder="Option Name"
+              />
+              <input
+                {...register(`options.${index}.extra` as const)}
+                className="py-2 px-4 focus:outline-none focus:border-gray-600 border-2"
+                type="number"
+                min={0}
+                placeholder="Option Extra"
+              />
+              <span
+                className="cursor-pointer text-white bg-red-500 py-2 px-4 ml-5"
+                onClick={() => onDeleteClick(index)}
+              >
+                Delete Option
+              </span>
+            </div>
+          ))}
+        </div>
         <Button
           canClick={isValid}
           loading={loading}
