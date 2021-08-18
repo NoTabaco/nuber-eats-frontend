@@ -13,6 +13,7 @@ export interface createOrderMutation_createOrder {
   __typename: "CreateOrderOutput";
   ok: boolean;
   error: string | null;
+  orderId: number | null;
 }
 
 export interface createOrderMutation {

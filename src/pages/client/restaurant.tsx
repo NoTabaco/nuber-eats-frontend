@@ -1,9 +1,14 @@
-import { gql, useQuery } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { useParams } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import { Dish } from "../../components/dish";
+import { DishOption } from "../../components/dish-option";
 import { DISH_FRAGMENT, RESTAURANT_FRAGMENT } from "../../fragments";
+import {
+  createOrderMutation,
+  createOrderMutationVariables,
+} from "../../__generated__/createOrderMutation";
 import { CreateOrderItemInput } from "../../__generated__/globalTypes";
 import {
   restaurantQuery,
@@ -32,6 +37,7 @@ const CREATE_ORDER_MUTATION = gql`
     createOrder(input: $createOrderInput) {
       ok
       error
+      orderId
     }
   }
 `;
@@ -68,7 +74,38 @@ export const Restaurant = () => {
       current.filter(orderItem => orderItem.dishId !== dishId)
     );
   };
-  const addOptionToItem = (dishId: number, option: any) => {
+  const addOptionToItem = (dishId: number, optionName: string) => {
+    if (!isSelected(dishId)) {
+      return;
+    }
+    const oldItem = getItem(dishId);
+    if (oldItem) {
+      const hasOption = Boolean(
+        oldItem.options?.find(aOption => aOption.name === optionName)
+      );
+      if (!hasOption) {
+        removeFromOrder(dishId);
+        setOrderItems(current => [
+          ...current,
+          { dishId, options: [...oldItem.options!, { name: optionName }] },
+        ]);
+      }
+    }
+  };
+  const getOptionFromItem = (
+    item: CreateOrderItemInput,
+    optionName: string
+  ) => {
+    return item.options?.find(option => option.name === optionName);
+  };
+  const isOptionSelected = (dishId: number, optionName: string) => {
+    const item = getItem(dishId);
+    if (item) {
+      return Boolean(getOptionFromItem(item, optionName));
+    }
+    return false;
+  };
+  const removeOptionFromItem = (dishId: number, optionName: string) => {
     if (!isSelected(dishId)) {
       return;
     }
@@ -77,11 +114,47 @@ export const Restaurant = () => {
       removeFromOrder(dishId);
       setOrderItems(current => [
         ...current,
-        { dishId, options: [...oldItem.options!, option] },
+        {
+          dishId,
+          options: oldItem.options?.filter(
+            option => option.name !== optionName
+          ),
+        },
       ]);
     }
   };
-  console.log(orderItems);
+  const triggerCancelOrder = () => {
+    setOrderStarted(false);
+    setOrderItems([]);
+  };
+  const history = useHistory();
+  const onCompleted = (data: createOrderMutation) => {
+    const {
+      createOrder: { ok, orderId },
+    } = data;
+    if (ok) {
+      history.push(`/orders/${orderId}`);
+    }
+  };
+  const [createOrderMutation, { loading: placingOrder }] = useMutation<
+    createOrderMutation,
+    createOrderMutationVariables
+  >(CREATE_ORDER_MUTATION, { onCompleted });
+  const triggerConfirmOrder = () => {
+    if (orderItems.length === 0) {
+      alert("Can't place empty order");
+      return;
+    }
+    const ok = window.confirm("You are about to place an order?");
+    if (ok) {
+      createOrderMutation({
+        variables: {
+          createOrderInput: { restaurantId: +params.id, items: orderItems },
+        },
+      });
+    }
+  };
+
   return (
     <div>
       <Helmet>
@@ -104,9 +177,24 @@ export const Restaurant = () => {
         </div>
       </div>
       <div className="max-w-screen-xl mx-5 md:mx-auto mt-12 flex flex-col items-end">
-        <button className="btn px-10" onClick={triggerStartOrder}>
-          {orderStarted ? "Ordering" : "Start Order"}
-        </button>
+        {!orderStarted && (
+          <button className="btn px-10" onClick={triggerStartOrder}>
+            Start Order
+          </button>
+        )}
+        {orderStarted && (
+          <div className="flex items-center">
+            <button className="btn px-10 mr-3" onClick={triggerConfirmOrder}>
+              Confirm Order
+            </button>
+            <button
+              className="btn px-10 bg-black hover:bg-black"
+              onClick={triggerCancelOrder}
+            >
+              Cancel Order
+            </button>
+          </div>
+        )}
         <div className="grid md:grid-cols-3 gap-x-5 gap-y-7 mt-14 w-full">
           {data?.restaurant.restaurant?.menu.map(dish => (
             <Dish
@@ -121,8 +209,19 @@ export const Restaurant = () => {
               orderStarted={orderStarted}
               addItemToOrder={addItemToOrder}
               removeFromOrder={removeFromOrder}
-              addOptionToItem={addOptionToItem}
-            />
+            >
+              {dish.options?.map((option, index) => (
+                <DishOption
+                  key={index}
+                  dishId={dish.id}
+                  name={option.name}
+                  extra={option.extra}
+                  isSelected={isOptionSelected(dish.id, option.name)}
+                  addOptionToItem={addOptionToItem}
+                  removeOptionFromItem={removeOptionFromItem}
+                />
+              ))}
+            </Dish>
           ))}
         </div>
       </div>
