@@ -1,9 +1,15 @@
-import { gql, useQuery } from "@apollo/client";
+import { gql, useQuery, useSubscription } from "@apollo/client";
+import { Helmet } from "react-helmet-async";
 import { useParams } from "react-router-dom";
+import { FULL_ORDER_FRAGMENT } from "../../fragments";
 import {
   getOrderQuery,
   getOrderQueryVariables,
 } from "../../__generated__/getOrderQuery";
+import {
+  orderUpdatesSubscription,
+  orderUpdatesSubscriptionVariables,
+} from "../../__generated__/orderUpdatesSubscription";
 
 const GET_ORDER_QUERY = gql`
   query getOrderQuery($getOrderInput: GetOrderInput!) {
@@ -11,21 +17,22 @@ const GET_ORDER_QUERY = gql`
       ok
       error
       order {
-        id
-        total
-        status
-        driver {
-          email
-        }
-        customer {
-          email
-        }
-        restaurant {
-          name
-        }
+        ...FullOrderParts
       }
     }
   }
+  ${FULL_ORDER_FRAGMENT}
+`;
+
+const ORDER_SUBSCRIPTION = gql`
+  subscription orderUpdatesSubscription(
+    $orderUpdatesInput: OrderUpdatesInput!
+  ) {
+    orderUpdates(input: $orderUpdatesInput) {
+      ...FullOrderParts
+    }
+  }
+  ${FULL_ORDER_FRAGMENT}
 `;
 
 interface IOrderParams {
@@ -38,9 +45,18 @@ export const Order = () => {
     GET_ORDER_QUERY,
     { variables: { getOrderInput: { id: +params.id } } }
   );
-  console.log(data);
+  const { data: subscriptionData } = useSubscription<
+    orderUpdatesSubscription,
+    orderUpdatesSubscriptionVariables
+  >(ORDER_SUBSCRIPTION, {
+    variables: { orderUpdatesInput: { id: +params.id } },
+  });
+  console.log(subscriptionData);
   return (
     <div className="container flex justify-center mt-10 md:mt-24">
+      <Helmet>
+        <title>Order #{params.id} | Nuber Eats</title>
+      </Helmet>
       <div className="border border-gray-800 w-full max-w-screen-sm flex flex-col justify-center">
         <h4 className="bg-gray-800 w-full py-5 text-white text-center text-xl">
           Order #{params.id}
