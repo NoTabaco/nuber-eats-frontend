@@ -1,4 +1,5 @@
-import { gql, useQuery, useSubscription } from "@apollo/client";
+import { gql, useQuery } from "@apollo/client";
+import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useParams } from "react-router-dom";
 import { FULL_ORDER_FRAGMENT } from "../../fragments";
@@ -6,10 +7,7 @@ import {
   getOrderQuery,
   getOrderQueryVariables,
 } from "../../__generated__/getOrderQuery";
-import {
-  orderUpdatesSubscription,
-  orderUpdatesSubscriptionVariables,
-} from "../../__generated__/orderUpdatesSubscription";
+import { orderUpdatesSubscription } from "../../__generated__/orderUpdatesSubscription";
 
 const GET_ORDER_QUERY = gql`
   query getOrderQuery($getOrderInput: GetOrderInput!) {
@@ -41,17 +39,33 @@ interface IOrderParams {
 
 export const Order = () => {
   const params = useParams<IOrderParams>();
-  const { data } = useQuery<getOrderQuery, getOrderQueryVariables>(
-    GET_ORDER_QUERY,
-    { variables: { getOrderInput: { id: +params.id } } }
-  );
-  const { data: subscriptionData } = useSubscription<
-    orderUpdatesSubscription,
-    orderUpdatesSubscriptionVariables
-  >(ORDER_SUBSCRIPTION, {
-    variables: { orderUpdatesInput: { id: +params.id } },
-  });
-  console.log(subscriptionData);
+  const { data, subscribeToMore } = useQuery<
+    getOrderQuery,
+    getOrderQueryVariables
+  >(GET_ORDER_QUERY, { variables: { getOrderInput: { id: +params.id } } });
+  useEffect(() => {
+    if (data?.getOrder.ok) {
+      subscribeToMore({
+        document: ORDER_SUBSCRIPTION,
+        variables: { orderUpdatesInput: { id: +params.id } },
+        updateQuery: (
+          prev,
+          {
+            subscriptionData: { data },
+          }: { subscriptionData: { data: orderUpdatesSubscription } }
+        ) => {
+          if (!data) return prev;
+          return {
+            getOrder: {
+              ...prev.getOrder,
+              order: data.orderUpdates,
+            },
+          };
+        },
+      });
+    }
+  }, [data, params.id, subscribeToMore]);
+
   return (
     <div className="container flex justify-center mt-10 md:mt-24">
       <Helmet>
