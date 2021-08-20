@@ -3,10 +3,12 @@ import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useParams } from "react-router-dom";
 import { FULL_ORDER_FRAGMENT } from "../../fragments";
+import { useMe } from "../../hooks/useMe";
 import {
   getOrderQuery,
   getOrderQueryVariables,
 } from "../../__generated__/getOrderQuery";
+import { OrderStatus, UserRole } from "../../__generated__/globalTypes";
 import { orderUpdatesSubscription } from "../../__generated__/orderUpdatesSubscription";
 
 const GET_ORDER_QUERY = gql`
@@ -39,6 +41,7 @@ interface IOrderParams {
 
 export const Order = () => {
   const params = useParams<IOrderParams>();
+  const { data: userData } = useMe();
   const { data, subscribeToMore } = useQuery<
     getOrderQuery,
     getOrderQueryVariables
@@ -97,9 +100,21 @@ export const Order = () => {
               {data?.getOrder.order?.driver?.email || "Not yet"}
             </span>
           </div>
-          <span className="text-center mt-5 mb-3 text-2xl text-lime-600">
-            Status: {data?.getOrder.order?.status}
-          </span>
+          {userData?.me.role === UserRole.Client && (
+            <span className="text-center mt-5 mb-3 text-2xl text-lime-600">
+              Status: {data?.getOrder.order?.status}
+            </span>
+          )}
+          {userData?.me.role === UserRole.Owner && (
+            <>
+              {data?.getOrder.order?.status === OrderStatus.Pending && (
+                <button className="btn">Accept Order</button>
+              )}
+              {data?.getOrder.order?.status === OrderStatus.Cooking && (
+                <button className="btn">Order Cooked</button>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
