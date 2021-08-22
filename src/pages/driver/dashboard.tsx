@@ -44,10 +44,43 @@ export const Dashboard = () => {
       ); */
     }
   }, [driverCoords.lat, driverCoords.lng, map, maps]);
-  const onApiLoaded = ({ map, maps }: { map: any; maps: any }) => {
+  const onApiLoaded = ({ map, maps }: { map: google.maps.Map; maps: any }) => {
     map.panTo(new google.maps.LatLng(driverCoords.lat, driverCoords.lng));
     setMap(map);
     setMaps(maps);
+  };
+  const onGetRouteClick = () => {
+    if (map) {
+      const directionsService = new google.maps.DirectionsService();
+      const directionsRenderer = new google.maps.DirectionsRenderer({
+        map,
+        polylineOptions: {
+          strokeColor: "#000",
+          strokeOpacity: 1,
+          strokeWeight: 3,
+        },
+      });
+      directionsService.route(
+        {
+          origin: {
+            location: new google.maps.LatLng(
+              driverCoords.lat,
+              driverCoords.lng
+            ),
+          },
+          destination: {
+            location: new google.maps.LatLng(
+              driverCoords.lat + 0.05,
+              driverCoords.lng + 0.05
+            ),
+          },
+          travelMode: google.maps.TravelMode.DRIVING,
+        },
+        result => {
+          directionsRenderer.setDirections(result);
+        }
+      );
+    }
   };
 
   return (
@@ -62,10 +95,9 @@ export const Dashboard = () => {
           defaultCenter={{ lat: 34.9, lng: 127.5 }}
           yesIWantToUseGoogleMapApiInternals
           onGoogleApiLoaded={onApiLoaded}
-        >
-          <Driver lat={driverCoords.lat} lng={driverCoords.lng} />
-        </GoogleMapReact>
+        ></GoogleMapReact>
       </div>
+      <button onClick={onGetRouteClick}>Get route</button>
     </div>
   );
 };
