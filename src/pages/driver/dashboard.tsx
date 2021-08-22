@@ -6,9 +6,16 @@ interface ICoords {
   lng: number;
 }
 
+interface IDriverProps {
+  lat: number;
+  lng: number;
+}
+
+const Driver: React.FC<IDriverProps> = () => <div className="text-lg">🚖</div>;
+
 export const Dashboard = () => {
   const [driverCoords, setDriverCoords] = useState<ICoords>({ lat: 0, lng: 0 });
-  const [map, setMap] = useState<any>();
+  const [map, setMap] = useState<google.maps.Map>();
   const [maps, setMaps] = useState<any>();
   const onSuccess: PositionCallback = ({
     coords: { latitude, longitude },
@@ -25,11 +32,20 @@ export const Dashboard = () => {
   }, []);
   useEffect(() => {
     if (map && maps) {
-      map.panTo(new maps.LatLng(driverCoords.lat, driverCoords.lng));
+      map.panTo(new google.maps.LatLng(driverCoords.lat, driverCoords.lng));
+      /* const geocoder = new google.maps.Geocoder();
+      geocoder.geocode(
+        {
+          location: new google.maps.LatLng(driverCoords.lat, driverCoords.lng),
+        },
+        (results, status) => {
+          console.log(results, status);
+        }
+      ); */
     }
-  }, [driverCoords.lat, driverCoords.lng]);
+  }, [driverCoords.lat, driverCoords.lng, map, maps]);
   const onApiLoaded = ({ map, maps }: { map: any; maps: any }) => {
-    map.panTo(new maps.LatLng(driverCoords.lat, driverCoords.lng));
+    map.panTo(new google.maps.LatLng(driverCoords.lat, driverCoords.lng));
     setMap(map);
     setMaps(maps);
   };
@@ -47,14 +63,7 @@ export const Dashboard = () => {
           yesIWantToUseGoogleMapApiInternals
           onGoogleApiLoaded={onApiLoaded}
         >
-          <div
-            className="text-lg"
-            // @ts-ignore
-            lat={driverCoords.lat}
-            lng={driverCoords.lng}
-          >
-            🚖
-          </div>
+          <Driver lat={driverCoords.lat} lng={driverCoords.lng} />
         </GoogleMapReact>
       </div>
     </div>
