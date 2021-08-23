@@ -1,5 +1,19 @@
+import { gql, useSubscription } from "@apollo/client";
 import GoogleMapReact from "google-map-react";
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
+import { FULL_ORDER_FRAGMENT } from "../../fragments";
+import { cookedOrdersSubscription } from "../../__generated__/cookedOrdersSubscription";
+
+const COOKED_ORDERS_SUBSCRIPTION = gql`
+  subscription cookedOrdersSubscription {
+    cookedOrders {
+      ...FullOrderParts
+    }
+  }
+  ${FULL_ORDER_FRAGMENT}
+`;
 
 interface ICoords {
   lat: number;
@@ -49,7 +63,7 @@ export const Dashboard = () => {
     setMap(map);
     setMaps(maps);
   };
-  const onGetRouteClick = () => {
+  const makeRoute = () => {
     if (map) {
       const directionsService = new google.maps.DirectionsService();
       const directionsRenderer = new google.maps.DirectionsRenderer({
@@ -82,9 +96,20 @@ export const Dashboard = () => {
       );
     }
   };
+  const { data: cookedOrdersData } = useSubscription<cookedOrdersSubscription>(
+    COOKED_ORDERS_SUBSCRIPTION
+  );
+  useEffect(() => {
+    if (cookedOrdersData?.cookedOrders.id) {
+      makeRoute();
+    }
+  }, [cookedOrdersData, makeRoute]);
 
   return (
     <div>
+      <Helmet>
+        <title>Driver Dashboard | Nuber Eats</title>
+      </Helmet>
       <div
         className="overflow-hidden"
         style={{ height: "50vh", width: "100%" }}
@@ -97,7 +122,26 @@ export const Dashboard = () => {
           onGoogleApiLoaded={onApiLoaded}
         ></GoogleMapReact>
       </div>
-      <button onClick={onGetRouteClick}>Get route</button>
+      <div className="max-w-screen-sm mx-auto bg-white relative -top-10 shadow-lg py-8 px-5">
+        {cookedOrdersData?.cookedOrders.restaurant ? (
+          <>
+            <h1 className="text-center text-3xl font-medium">
+              New Cooked Order
+            </h1>
+            <h4 className="text-center text-2xl font-medium my-3">
+              Pick it up soon @ {cookedOrdersData.cookedOrders.restaurant?.name}
+            </h4>
+            <Link
+              to={`/orders/${cookedOrdersData.cookedOrders.id}`}
+              className="btn w-full mt-5 block text-center"
+            >
+              Accept Challenge &rarr;
+            </Link>
+          </>
+        ) : (
+          <h1 className="text-center text-3xl font-medium">No orders yet...</h1>
+        )}
+      </div>
     </div>
   );
 };
