@@ -1,10 +1,15 @@
-import { gql, useSubscription } from "@apollo/client";
+import { gql, useMutation, useSubscription } from "@apollo/client";
 import GoogleMapReact from "google-map-react";
+import { useCallback } from "react";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import { FULL_ORDER_FRAGMENT } from "../../fragments";
 import { cookedOrdersSubscription } from "../../__generated__/cookedOrdersSubscription";
+import {
+  takeOrderMutation,
+  takeOrderMutationVariables,
+} from "../../__generated__/takeOrderMutation";
 
 const COOKED_ORDERS_SUBSCRIPTION = gql`
   subscription cookedOrdersSubscription {
@@ -13,6 +18,15 @@ const COOKED_ORDERS_SUBSCRIPTION = gql`
     }
   }
   ${FULL_ORDER_FRAGMENT}
+`;
+
+const TAKE_ORDER_MUTATION = gql`
+  mutation takeOrderMutation($takeOrderInput: TakeOrderInput!) {
+    takeOrder(input: $takeOrderInput) {
+      ok
+      error
+    }
+  }
 `;
 
 interface ICoords {
@@ -63,7 +77,7 @@ export const Dashboard = () => {
     setMap(map);
     setMaps(maps);
   };
-  const makeRoute = () => {
+  const makeRoute = useCallback(() => {
     if (map) {
       const directionsService = new google.maps.DirectionsService();
       const directionsRenderer = new google.maps.DirectionsRenderer({
@@ -71,7 +85,7 @@ export const Dashboard = () => {
         polylineOptions: {
           strokeColor: "#000",
           strokeOpacity: 1,
-          strokeWeight: 3,
+          strokeWeight: 5,
         },
       });
       directionsService.route(
@@ -95,7 +109,7 @@ export const Dashboard = () => {
         }
       );
     }
-  };
+  }, [driverCoords.lat, driverCoords.lng, map]);
   const { data: cookedOrdersData } = useSubscription<cookedOrdersSubscription>(
     COOKED_ORDERS_SUBSCRIPTION
   );
@@ -104,6 +118,19 @@ export const Dashboard = () => {
       makeRoute();
     }
   }, [cookedOrdersData, makeRoute]);
+  const history = useHistory();
+  const onCompleted = (data: takeOrderMutation) => {
+    if (data.takeOrder.ok) {
+      history.push(`/orders/${cookedOrdersData?.cookedOrders.id}`);
+    }
+  };
+  const [takeOrderMutation] = useMutation<
+    takeOrderMutation,
+    takeOrderMutationVariables
+  >(TAKE_ORDER_MUTATION, { onCompleted });
+  const triggerMutation = (orderId: number) => {
+    takeOrderMutation({ variables: { takeOrderInput: { id: orderId } } });
+  };
 
   return (
     <div>
@@ -131,12 +158,12 @@ export const Dashboard = () => {
             <h4 className="text-center text-2xl font-medium my-3">
               Pick it up soon @ {cookedOrdersData.cookedOrders.restaurant?.name}
             </h4>
-            <Link
-              to={`/orders/${cookedOrdersData.cookedOrders.id}`}
+            <button
+              onClick={() => triggerMutation(cookedOrdersData.cookedOrders.id)}
               className="btn w-full mt-5 block text-center"
             >
               Accept Challenge &rarr;
-            </Link>
+            </button>
           </>
         ) : (
           <h1 className="text-center text-3xl font-medium">No orders yet...</h1>
